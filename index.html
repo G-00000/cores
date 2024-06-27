@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Cores Aleatórias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #FFFDD0;
+        }
+        #colorBox {
+            width: 80%;
+            height: 100px;
+            border: 3px solid black;
+            margin-bottom: 20px;
+        }
+        #questionButton {
+            font-size: 24px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        #questionButton:focus {
+            outline: 2px solid blue;
+        }
+        #questionButton:active {
+            transform: scale(0.95);
+        }
+        #image {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        #message {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <img id="image" src="imagem1.png" alt="Imagem Clicável" onclick="changeImage()">
+    <div id="colorBox"></div>
+    <button id="questionButton" onclick="generateColor()" tabindex="0">?</button>
+    <div id="message">Gerador de Cores</div>
+
+    <script>
+        let waitCount = 0;
+        let currentImageIndex = 1;
+        const totalImages = 3; // Defina aqui o número total de imagens
+
+        function changeImage() {
+            currentImageIndex = (currentImageIndex % totalImages) + 1;
+            document.getElementById('image').src = `imagem${currentImageIndex}.png`;
+        }
+
+        function updateMessage(text) {
+            document.getElementById('message').textContent = text;
+        }
+
+        function generateColor() {
+            fetch('https://qrng.anu.edu.au/API/jsonI.php?length=1&type=uint8')
+                .then(response => response.json())
+                .then(data => {
+                    const number = data.data[0];
+                    let sum = String(number).split('').reduce((a, b) => parseInt(a) + parseInt(b), 0);
+                    while (sum > 9) {
+                        sum = String(sum).split('').reduce((a, b) => parseInt(a) + parseInt(b), 0);
+                    }
+                    let color, colorName;
+                    switch(sum) {
+                        case 0: 
+                            color = 'blue';
+                            colorName = 'Azul';
+                            break;
+                        case 1:
+                        case 2: 
+                            color = 'red';
+                            colorName = 'Vermelho';
+                            break;
+                        case 3:
+                        case 5:
+                        case 6: 
+                            color = 'gray';
+                            colorName = 'Cinzento';
+                            break;
+                        case 4:
+                        case 7: 
+                            color = 'yellow';
+                            colorName = 'Amarelo';
+                            break;
+                        case 8:
+                        case 9: 
+                            color = 'green';
+                            colorName = 'Verde';
+                            break;
+                    }
+                    document.getElementById('colorBox').style.backgroundColor = color;
+                    updateMessage(colorName);
+                    waitCount = 0;
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar cor:', error);
+                    updateMessage(waitCount % 2 === 0 ? "Espera um pouco" : "Espera");
+                    waitCount++;
+                });
+        }
+
+        document.getElementById('questionButton').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                generateColor();
+            }
+        });
+    </script>
+</body>
+</html>

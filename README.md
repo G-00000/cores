@@ -29,6 +29,10 @@ o resultado for superior a 9. Mantém-se a correspondência original:
 | 4, 7 | Amarelo |
 | 8, 9 | Verde |
 
+O comprimento da resposta é aceite como `1` ou `"1"`, conforme o formato
+devolvido pela ANU. O valor usado nos cálculos continua a ser um inteiro entre
+0 e 255, sem conversões nem alterações.
+
 Os pedidos têm um prazo de 10 segundos. Respostas inválidas, falhas de rede,
 recusas de acesso e limites de utilização apresentam uma mensagem e não geram
 uma nova cor. A última cor válida permanece visível.

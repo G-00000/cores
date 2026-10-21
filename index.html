@@ -149,7 +149,8 @@
                 } catch {
                     throw new Error('A ANU devolveu uma resposta inválida. Tenta novamente mais tarde.');
                 }
-                if (data?.success !== true || data.type !== 'uint8' || data.length !== 1 ||
+                if (data?.success !== true || data.type !== 'uint8' ||
+                    (data.length !== 1 && data.length !== '1') ||
                     !Array.isArray(data.data) || data.data.length !== 1 ||
                     !Number.isInteger(data.data[0]) || data.data[0] < 0 || data.data[0] > 255) {
                     throw new Error('A ANU não devolveu um número válido entre 0 e 255. Tenta novamente.');

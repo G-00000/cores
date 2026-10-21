@@ -72,6 +72,22 @@ test('all 256 possible bytes preserve the digit-sum rules and colour mapping', a
     }
 });
 
+test('ANU string length metadata is accepted for all 256 possible bytes', async () => {
+    for (let number = 0; number <= 255; number++) {
+        const numeric = page(async () => success(number));
+        const stringLength = page(async () => ({
+            ok: true, status: 200,
+            json: async () => ({ success: true, type: 'uint8', length: '1', data: [number] })
+        }));
+        await numeric.generate();
+        await stringLength.generate();
+        assert.equal(stringLength.elements.colorBox.style.backgroundColor,
+            numeric.elements.colorBox.style.backgroundColor, `byte ${number}`);
+        assert.equal(stringLength.elements.message.textContent,
+            numeric.elements.message.textContent, `byte ${number}`);
+    }
+});
+
 test('missing key requests configuration without contacting ANU', async () => {
     const p = page(() => assert.fail('must not send a request'), '  ');
     await p.generate();
@@ -108,7 +124,8 @@ test('HTTP failures, invalid responses and network failures never generate a col
     const valid = await success(100).json();
     for (const invalid of [
         null, {}, { ...valid, success: false }, { ...valid, type: 'uint16' },
-        { ...valid, length: 2 }, { ...valid, data: [] }, { ...valid, data: [1, 2] },
+        ...[2, '2', true, null, undefined, ''].map(length => ({ ...valid, length })),
+        { ...valid, data: [] }, { ...valid, data: [1, 2] },
         ...[-1, 256, 1.5, '42', null].map(value => ({ ...valid, data: [value] }))
     ]) {
         cases.push([async () => ({ ok: true, status: 200, json: async () => invalid }), /válido/]);

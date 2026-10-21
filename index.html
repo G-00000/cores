@@ -68,14 +68,38 @@
             <a href="https://quantumnumbers.anu.edu.au/" target="_blank" rel="noopener noreferrer">Criar uma chave na ANU</a>.</p>
         <label for="apiKey">Chave de acesso da ANU</label>
         <input id="apiKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="none">
-        <p>A chave fica apenas na memória desta página e é enviada diretamente à ANU.
-            Ao recarregar ou fechar a página, será necessário introduzi-la novamente.</p>
+        <p id="keyStorageInfo">A chave fica guardada neste navegador e é enviada diretamente à ANU.
+            Para a remover, apaga o conteúdo do campo.</p>
     </details>
 
     <script>
         let requestPending = false;
         let currentImageIndex = 1;
         const totalImages = 3; // Defina aqui o número total de imagens
+        const apiKeyStorageName = 'cores.anuApiKey';
+        const apiKeyInput = document.getElementById('apiKey');
+
+        function saveApiKey() {
+            try {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    localStorage.setItem(apiKeyStorageName, key);
+                } else {
+                    localStorage.removeItem(apiKeyStorageName);
+                }
+            } catch {
+                document.getElementById('keyStorageInfo').textContent =
+                    'O navegador impediu guardar a chave. Podes usá-la nesta página, mas terás de a introduzir novamente ao recarregar.';
+            }
+        }
+
+        try {
+            apiKeyInput.value = localStorage.getItem(apiKeyStorageName) || '';
+        } catch {
+            document.getElementById('keyStorageInfo').textContent =
+                'O navegador impediu guardar a chave. Podes usá-la nesta página, mas terás de a introduzir novamente ao recarregar.';
+        }
+        apiKeyInput.addEventListener('input', saveApiKey);
 
         function changeImage() {
             currentImageIndex = (currentImageIndex % totalImages) + 1;
@@ -89,6 +113,7 @@
         async function generateColor() {
             if (requestPending) return;
             const apiKey = document.getElementById('apiKey').value.trim();
+            saveApiKey();
             if (!apiKey) {
                 document.getElementById('apiSettings').open = true;
                 document.getElementById('apiKey').focus();

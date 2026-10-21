@@ -6,17 +6,24 @@ const vm = require('node:vm');
 const html = readFileSync(`${__dirname}/../index.html`, 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
-function page(fetchResponse, key = 'test-key') {
+function page(fetchResponse, key = 'test-key', storage = new Map()) {
     const elements = Object.fromEntries(
-        ['apiKey', 'apiSettings', 'questionButton', 'colorBox', 'message', 'image']
-            .map(id => [id, { style: {}, focus() { this.focused = true; } }])
+        ['apiKey', 'apiSettings', 'questionButton', 'colorBox', 'message', 'image', 'keyStorageInfo']
+            .map(id => [id, {
+                style: {}, listeners: {}, focus() { this.focused = true; },
+                addEventListener(name, callback) { this.listeners[name] = callback; }
+            }])
     );
-    elements.apiKey.value = key;
     const calls = [];
     let timer;
     let timerCleared = false;
     const context = vm.createContext({
         document: { getElementById: id => elements[id] },
+        localStorage: {
+            getItem: name => storage.get(name) ?? null,
+            setItem: (name, value) => storage.set(name, value),
+            removeItem: name => storage.delete(name)
+        },
         AbortController, TypeError,
         setTimeout(callback, delay) {
             assert.equal(delay, 10000);
@@ -30,8 +37,9 @@ function page(fetchResponse, key = 'test-key') {
         }
     });
     vm.runInContext(script, context);
+    if (key !== null) elements.apiKey.value = key;
     return {
-        elements, calls,
+        elements, calls, storage,
         generate: () => context.generateColor(),
         expire: () => timer(),
         timerCleared: () => timerCleared,
@@ -135,4 +143,29 @@ test('image cycling remains unchanged', () => {
         p.changeImage();
         assert.equal(p.elements.image.src, `imagem${index}.png`);
     }
+});
+
+test('key is saved on input, restored on reload and removed when cleared', () => {
+    const storage = new Map();
+    const p = page(() => assert.fail('saving must not make a request'), '', storage);
+    p.elements.apiKey.value = '  saved-test-key  ';
+    p.elements.apiKey.listeners.input();
+    assert.equal(storage.get('cores.anuApiKey'), 'saved-test-key');
+    const reloaded = page(() => assert.fail('loading must not make a request'), null, storage);
+    assert.equal(reloaded.elements.apiKey.value, 'saved-test-key');
+    reloaded.elements.apiKey.value = '';
+    reloaded.elements.apiKey.listeners.input();
+    assert.equal(storage.has('cores.anuApiKey'), false);
+    assert.equal(page(() => {}, null, storage).elements.apiKey.value, '');
+});
+
+test('blocked storage still allows generating a colour with an entered key', async () => {
+    const storage = {
+        get() { throw new Error('Storage blocked'); },
+        set() { throw new Error('Storage blocked'); }
+    };
+    const p = page(async () => success(100), 'test-key', storage);
+    await p.generate();
+    assert.equal(p.elements.message.textContent, 'Vermelho');
+    assert.match(p.elements.keyStorageInfo.textContent, /impediu guardar/);
 });

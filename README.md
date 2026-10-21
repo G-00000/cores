@@ -10,10 +10,11 @@ números gerados localmente nem guarda números para reutilização.
 2. Na página, abrir «Acesso ao ANU Quantum Numbers» e introduzir a chave.
 3. Premir «?» para gerar uma cor.
 
-A chave fica apenas na memória da página e é enviada diretamente à ANU através
-do cabeçalho `x-api-key`. Não é guardada no repositório nem no armazenamento do
-navegador. Ao recarregar a página, é necessário introduzi-la novamente.
-As quotas e condições são definidas pela ANU.
+A chave fica guardada no `localStorage` deste navegador e é recuperada ao abrir
+ou recarregar a página. É enviada diretamente à ANU através do cabeçalho
+`x-api-key` e não é publicada no repositório. Para a remover, apagar o conteúdo
+do campo. Se o navegador bloquear o armazenamento, a página continua a permitir
+usar a chave sem a guardar. As quotas e condições são definidas pela ANU.
 
 ## Cálculos
 
